@@ -11,7 +11,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from src.variable_spec import VariableSpec
 from src.variable_transformer import transform_value
 
-
 @pytest.fixture
 def test_dataframe():
     """Create a test dataframe for use in tests."""
@@ -34,19 +33,16 @@ def test_log_diff_normal_case(test_dataframe):
     output = transform_value(variable_spec=variable_spec, date='2022-02-01', base_df=test_dataframe)
     assert output == expected, 'Taking the log difference with order 1 failed for simple values'
 
-
 def test_log_diff_missing_base_value(test_dataframe):
-    """Test 2: appropriate error is raised when the base value for the differencing is missing."""
+    """Test 2: check that the function returns nan when the base value for the differencing is missing."""
     variable_spec = VariableSpec(
         name='value',
         diff_order=1, 
         log_transform=True,
         lag_order=0,
     )
-    with pytest.raises(ValueError) as excinfo:
-        transform_value(variable_spec=variable_spec, date='2022-01-01', base_df=test_dataframe)
-    assert str(excinfo.value) == "Missing required base value for date 2021-12-01 00:00:00"
-
+    output = transform_value(variable_spec=variable_spec, date='2022-01-01', base_df=test_dataframe)
+    assert pd.isna(output), 'Function should return nan when required base value for differencing is missing'
 
 def test_log_diff_order_12(test_dataframe):
     """Test 3: check that the function works for a differencing order of 12."""
@@ -113,14 +109,15 @@ def test_lag_order_1(test_dataframe):
     assert output == expected, 'Lag order of 1 failed'
 
 
+
 def test_lag_order_missing_value(test_dataframe):
-    """Test 8: check that an error is raised when the lag order looks for a value that is not in the dataframe."""
+    """Test 8: check that the function returns nan when the lag order looks for a value that is not in the dataframe."""
     variable_spec = VariableSpec(
         name='value',
         diff_order=0, 
         log_transform=False,
         lag_order=1,
     )
-    with pytest.raises(ValueError) as excinfo:
-        transform_value(variable_spec=variable_spec, date='2022-01-01', base_df=test_dataframe)
-    assert str(excinfo.value) == "Missing required lag value for date 2021-12-01 00:00:00"
+    output = transform_value(variable_spec=variable_spec, date='2022-01-01', base_df=test_dataframe)
+    assert pd.isna(output), 'Function should return nan when required lag value is missing'
+
