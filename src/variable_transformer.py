@@ -131,3 +131,79 @@ def reverse_transform_value(variable_spec, date, transformed_value, base_df):
     # No further transformation needed
     
     return result_value
+
+# TODO: DEze moet eigenlijk die andere gebruiken maar ik ben er even helemaal klaar mee
+def transform_column(df, col_name, diff_order=0, take_log=False, lag_order=0):
+    """
+    Apply any combination of a logarithmic transformation, a difference transformation, and/or a lag transformation to a column of a Pandas DataFrame.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The DataFrame containing the column to be transformed.
+    col_name : str
+        The name of the column to be transformed.
+    diff_order : int, optional
+        The order of the difference transformation to be applied (default is 0, which means no transformation).
+    take_log : bool, optional
+        If True, apply a logarithmic transformation to the column (default is False).
+    lag_order : int, optional
+        The number of lags to apply to the transformed column (default is 0, which means no lags).
+
+    Returns
+    -------
+    pandas.DataFrame
+        A new DataFrame with the transformed column(s).
+    str
+        The name of the transformed column.
+        
+    Examples
+    --------
+    >>> df = pd.DataFrame({'date': ['2022-01-01', '2022-02-01', '2022-03-01', '2022-04-01', '2022-05-01', '2022-06-01'],
+                           'values': [3, 3, 7, 2, 4, 7]})
+
+    # Transform column 'values' with a logarithmic transformation, a difference transformation of order 1, and a lag of 1
+    >>> new_df, transformed_col = transform_column(df, 'values', diff_order=1, take_log=True, lag_order=1)
+
+    # Print the new DataFrame and the name of the transformed column
+    >>> print(new_df)
+           date  values  log(values)(d1)(-1)
+    0 2022-01-01       3                  NaN
+    1 2022-02-01       3                  NaN
+    2 2022-03-01       7             0.000000
+    3 2022-04-01       2             0.847298
+    4 2022-05-01       4            -1.252763
+    5 2022-06-01       7             0.693147
+    >>> print(transformed_col)
+    log(values)(d1)(-1)
+    """
+    # Make a copy of the original DataFrame to avoid modifying the original data
+    transformed_df = df.copy()
+    transformed_df[col_name] = pd.to_numeric(transformed_df[col_name])
+    original_columns = transformed_df.columns
+
+    # Apply optional logarithm transformation to the specified column
+    if take_log:
+        transformed_df[f"log({col_name})"] = np.log(transformed_df[col_name])
+        transformed_col = f"log({col_name})"
+    else:
+        transformed_col = col_name
+    
+    # Apply difference transformation to the transformed column if diff_order > 0
+    if diff_order > 0:
+        transformed_df[f"{transformed_col}(d{diff_order})"] = transformed_df[transformed_col].diff(diff_order)
+        transformed_col = f"{transformed_col}(d{diff_order})"
+    else:
+        transformed_col = transformed_col
+    
+    # Apply lag transformation to the transformed column if lag_order > 0
+    if lag_order > 0:
+        transformed_df[f"{transformed_col}({-lag_order})"] = transformed_df[transformed_col].shift(lag_order)
+        transformed_col = f"{transformed_col}({-lag_order})"
+    
+    if transformed_col not in list(original_columns):
+        # Return the new DataFrame with the transformed column(s)
+        return transformed_df[list(original_columns)+[transformed_col]], transformed_col
+    else:
+        # This prevents duplicate rows when nothing is done
+        return transformed_df[list(original_columns)], transformed_col

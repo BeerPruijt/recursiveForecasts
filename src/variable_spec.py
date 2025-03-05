@@ -14,13 +14,19 @@ class VariableSpec:
         return [self.name, self.diff_order, self.log_transform, self.lag_order]
     
     def get_transformed_column_name(self) -> str:
-        """Get the name of the transformed variable."""
+        """Get the name of the transformed variable in the format [log(]variable_name[)](dN)(-N)."""
+        name = self.name
+        
+        # Apply log transform if specified
         if self.log_transform:
-            name = f"log({self.name})"
-        else:
-            name = self.name
+            name = f"log({name})"
+        
+        # Add diff_order notation if needed
         if self.diff_order > 0:
-            name = f"{name}_d{self.diff_order}"
+            name = f"{name}(d{self.diff_order})"
+        
+        # Add lag_order notation if needed
         if self.lag_order > 0:
-            name = f"{name}_l{self.lag_order}"
+            name = f"{name}(-{self.lag_order})"
+        
         return name

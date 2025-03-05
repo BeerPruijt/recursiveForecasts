@@ -1,0 +1,12 @@
+# These are necessary for running the models
+pandas==2.0.3
+numpy==1.26.4
+#prismclient @ git+https://vuurtoren@dev.azure.com/vuurtoren/PRISM/_git/PRISM#subdirectory=azure_client
+statsmodels==0.13.2
+pmdarima==2.0.3
+pytest==7.4.4
+
+# These are necessary for generating the report
+matplotlib==3.7.2
+Jinja2==3.1.2
+openpyxl==3.1.2
