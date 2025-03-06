@@ -150,8 +150,7 @@ class LinearPredictor:
         else:
             self.forecast_window = pd.date_range(start=self.start, periods=self.steps_ahead, freq='MS')
 
-        # TODO
-        # Here we validate the inputs, specifically we check that the first forecast is possible and all non-recursive columns contain no NaN's
+        # TODO: validate the inputs, specifically check that the first forecast is possible and all non-recursive columns contain no NaN's
 
         # Make the prediction for each index in the forecast window
         for index in self.forecast_window:
@@ -174,14 +173,16 @@ class LinearPredictor:
             # If NAME of the exogenous variable is the same as the endogenous variable, we need to update the exogenous variable
             for var_spec in self.exogenous_specification:
                 if var_spec.name == self.endogenous_specification.name:
+                    # We determinen the relevant index for the transformed value (lag order requires us to assign it to a future date)
+                    relevant_index = index + pd.DateOffset(months=var_spec.lag_order)
+
                     # We transform the value
                     transformed_val = transform_value(
                         variable_spec=var_spec,
-                        date=index,
+                        date=relevant_index,
                         base_df=self.df
                     )
-                    # We determinen the relevant index for the transformed value (lag order requires us to assign it to a future date)
-                    relevant_index = index + pd.DateOffset(months=var_spec.lag_order)
+
                     self.df.loc[relevant_index, var_spec.get_transformed_column_name()] = transformed_val
 
             # TODO: implement custom functionality for the error correction terms for example
